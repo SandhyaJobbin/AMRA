@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Autonomous Mobility Readiness Assessment</title>
+<style>
+:root {
+  --ink:#101828; --muted:#667085; --line:#d0d5dd; --panel:rgba(255,255,255,.92);
+  --good:#067647; --bad:#b42318; --warn:#b54708; --accent:#2563eb; --accent2:#7c3aed;
+  --road:#2b2f36; --sand:#eee8dc; --sky:#e8f4ff;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;color:var(--ink);background:
+radial-gradient(circle at 20% 0%,#fff 0,#f6f8fb 30%,#eef3f8 72%,#e7edf4 100%);min-height:100vh}
+button,input{font:inherit}
+.shell{min-height:100vh;display:flex;flex-direction:column}
+header{height:68px;display:flex;align-items:center;justify-content:space-between;padding:0 34px;background:rgba(255,255,255,.82);backdrop-filter:blur(14px);border-bottom:1px solid #e4e7ec;position:sticky;top:0;z-index:20}
+.brand{font-weight:800;letter-spacing:-.02em} .brand small{display:block;font-weight:600;color:var(--muted);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.progress{font-size:13px;color:var(--muted)}
+main{width:min(1180px,94vw);margin:28px auto 56px;flex:1}
+.card{background:var(--panel);border:1px solid rgba(208,213,221,.8);box-shadow:0 20px 55px rgba(16,24,40,.08);border-radius:24px;padding:30px}
+.hero{display:grid;grid-template-columns:1.15fr .85fr;gap:28px;align-items:center;min-height:600px}
+.kicker{display:inline-flex;padding:7px 11px;border-radius:999px;background:#eef4ff;color:#3538cd;font-weight:750;font-size:12px;letter-spacing:.05em;text-transform:uppercase}
+h1{font-size:clamp(38px,5vw,70px);line-height:.98;margin:18px 0 18px;letter-spacing:-.055em}
+h2{font-size:34px;letter-spacing:-.035em;margin:0 0 12px} h3{margin:0 0 8px}
+.lead{font-size:18px;line-height:1.6;color:#475467;max-width:720px}
+.btn{border:0;border-radius:14px;padding:13px 18px;font-weight:750;cursor:pointer;transition:.18s;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn:hover{transform:translateY(-1px)} .primary{background:#101828;color:white} .secondary{background:#f2f4f7;color:#344054} .ghost{background:white;border:1px solid var(--line)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+label{display:block;font-weight:700;font-size:13px;margin-bottom:7px}
+input{width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:12px;outline:none;background:white} input:focus{border-color:#84adff;box-shadow:0 0 0 4px #eef4ff}
+.hidden{display:none!important}
+.roadscene{height:430px;border-radius:26px;position:relative;overflow:hidden;background:linear-gradient(#cfe9ff 0 46%,#d7d1c2 46% 55%,var(--road) 55% 100%);box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.city{position:absolute;left:0;right:0;top:140px;height:102px;background:
+linear-gradient(90deg,#aeb8c4 0 9%,transparent 9% 12%,#bbc4cf 12% 24%,transparent 24% 28%,#9da9b6 28% 40%,transparent 40% 44%,#c4ccd4 44% 57%,transparent 57% 60%,#9aa7b5 60% 77%,transparent 77% 80%,#bac3cb 80% 100%);opacity:.85}
+.roadline{position:absolute;bottom:83px;left:2%;width:96%;height:8px;background:repeating-linear-gradient(90deg,#fff 0 52px,transparent 52px 92px);opacity:.86}
+.car{position:absolute;bottom:60px;left:8%;width:138px;height:54px;border-radius:30px 42px 17px 17px;background:linear-gradient(135deg,#e7eaef,#b7c0ca);box-shadow:0 12px 18px #0005;transition:left 1s cubic-bezier(.2,.8,.2,1),transform .35s}
+.car:before{content:"";position:absolute;left:34px;top:-27px;width:68px;height:35px;border-radius:35px 40px 4px 4px;background:linear-gradient(135deg,#d4dae1,#8fa0b2);border:5px solid #c9d0d8}
+.car:after{content:"";position:absolute;left:16px;right:12px;bottom:-11px;height:21px;background:radial-gradient(circle at 18% 50%,#111 0 9px,transparent 10px),radial-gradient(circle at 82% 50%,#111 0 9px,transparent 10px)}
+.sensor{position:absolute;width:17px;height:9px;border-radius:50%;background:#27364a;top:-34px;left:61px}
+.scan{position:absolute;bottom:55px;left:120px;width:180px;height:115px;border-radius:50%;border:1px solid #4f8cff88;transform:skewX(-22deg);animation:pulse 1.8s infinite}
+@keyframes pulse{0%,100%{opacity:.2;transform:scale(.92) skewX(-22deg)}50%{opacity:.75;transform:scale(1.05) skewX(-22deg)}}
+.car.success{left:68%;transform:rotate(-1deg)} .car.fail{animation:shake .45s 2}
+@keyframes shake{25%{transform:translateX(-12px)}75%{transform:translateX(12px)}}
+.heroStats{position:absolute;right:18px;top:18px;background:#101828e8;color:white;border-radius:16px;padding:12px 14px;font-size:12px;line-height:1.65}
+.steps{display:flex;gap:10px;flex-wrap:wrap;margin:22px 0} .pill{padding:8px 11px;border-radius:999px;background:#f2f4f7;color:#475467;font-size:12px;font-weight:700}
+.stategrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:22px}
+.state{border:1px solid var(--line);border-radius:18px;padding:22px;background:#fff;cursor:pointer;transition:.2s;min-height:135px} .state:hover{transform:translateY(-2px);box-shadow:0 10px 25px #10182812} .state.selected{outline:3px solid #9dbbff;background:#f5f8ff}
+.state strong{display:block;font-size:22px;margin-bottom:8px} .state span{color:var(--muted);font-size:13px}
+.mapwrap{border-radius:20px;background:#eef4f7;padding:18px;margin-top:22px} svg{width:100%;height:auto}
+.state-shape{fill:#cdd6df;stroke:#fff;stroke-width:2;cursor:pointer;transition:.2s} .state-shape.active{fill:#7896b3} .state-shape.pick{fill:#315f86}
+.qwrap{display:grid;grid-template-columns:.72fr 1.28fr;gap:20px}
+.scene{min-height:480px;border-radius:22px;background:linear-gradient(#dfeffd 0 42%,#cfc6b5 42% 50%,#333a43 50%);position:relative;overflow:hidden;padding:22px;color:#fff}
+.scene .tag{display:inline-block;background:#101828d9;padding:6px 9px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.05em}
+.scene .overlay{position:absolute;left:18px;right:18px;bottom:18px;background:#101828dc;border:1px solid #ffffff24;border-radius:15px;padding:13px;font-size:12px;line-height:1.55}
+.lanes{position:absolute;left:0;right:0;bottom:100px;height:10px;background:repeating-linear-gradient(90deg,#fff 0 44px,transparent 44px 85px);opacity:.8}
+.avcar{position:absolute;bottom:53px;left:42%;width:92px;height:38px;border-radius:22px 27px 11px 11px;background:#d9dee5;box-shadow:0 8px 16px #0006}
+.obj{position:absolute;border:2px solid #65d1ff;border-radius:6px;color:#e9fbff;font-size:10px;padding:3px 5px;background:#0a3a5544} .occlusion{position:absolute;background:repeating-linear-gradient(45deg,#f7b95520 0 8px,#f7b95540 8px 16px);border:1px dashed #ffc65c;border-radius:8px}
+.qhead{display:flex;justify-content:space-between;gap:12px;align-items:start} .qnum{font-size:12px;font-weight:800;color:#475467;text-transform:uppercase;letter-spacing:.06em}
+.question{font-size:26px;line-height:1.25;letter-spacing:-.025em;margin:12px 0 20px}
+.options{display:grid;gap:10px} .option{text-align:left;width:100%;padding:14px 15px;border:1px solid var(--line);border-radius:13px;background:white;cursor:pointer;font-weight:650;line-height:1.35} .option:hover{border-color:#98a2b3;background:#f9fafb} .option.correct{border-color:#75e0a7;background:#ecfdf3} .option.wrong{border-color:#fda29b;background:#fef3f2}
+.feedback{margin-top:17px;border-radius:15px;padding:15px 16px;font-size:14px;line-height:1.5} .feedback.good{background:#ecfdf3;color:#05603a} .feedback.bad{background:#fef3f2;color:#912018}
+.bar{height:8px;border-radius:999px;background:#eaecf0;overflow:hidden;margin:10px 0 0} .bar > div{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0;transition:.4s}
+.scoreHero{display:flex;align-items:center;justify-content:space-between;gap:22px;padding:24px;border-radius:20px;background:#101828;color:white} .scoreBig{font-size:62px;font-weight:850;letter-spacing:-.06em}
+.badge{padding:8px 13px;border-radius:999px;font-size:12px;font-weight:850;letter-spacing:.06em;background:white;color:#101828}
+.compgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin:18px 0}
+.comp{border:1px solid var(--line);border-radius:15px;padding:15px;background:#fff} .comphead{display:flex;justify-content:space-between;font-weight:700;font-size:13px}
+.table{width:100%;border-collapse:collapse;font-size:13px} .table th,.table td{padding:11px;border-bottom:1px solid #eaecf0;text-align:left}
+.certificate{padding:48px;border:10px solid #eef2f6;outline:1px solid #cfd6df;border-radius:8px;text-align:center;background:#fff;position:relative;overflow:hidden}
+.certificate:before{content:"";position:absolute;width:320px;height:320px;border-radius:50%;border:1px solid #dbe4ec;right:-110px;top:-145px;box-shadow:0 0 0 35px #f5f7f9,0 0 0 36px #dbe4ec}
+.certTitle{font-size:36px;font-weight:850;letter-spacing:-.04em} .certName{font-size:30px;font-family:Georgia,serif;margin:24px 0 8px}
+.note{font-size:12px;color:var(--muted);line-height:1.5} .topline{display:flex;justify-content:space-between;gap:14px;align-items:center;margin-bottom:20px}
+
+
+/* In-question AV response animations */
+.avcar{transition:transform .35s ease,left .9s cubic-bezier(.2,.8,.2,1),background .25s ease;z-index:5}
+.avcar.correct-run{left:68%;background:#b7e4c7;transform:translateY(-2px)}
+.avcar.correct-run:after{content:"✓";position:absolute;right:-14px;top:-18px;width:24px;height:24px;border-radius:50%;background:#067647;color:#fff;display:grid;place-items:center;font-weight:900;box-shadow:0 4px 10px #0003}
+.avcar.wrong-stop{background:#f5b7b1;animation:avbrake .6s ease-in-out 2}
+.avcar.wrong-stop:after{content:"!";position:absolute;right:-14px;top:-18px;width:24px;height:24px;border-radius:50%;background:#b42318;color:#fff;display:grid;place-items:center;font-weight:900;box-shadow:0 4px 10px #0003}
+@keyframes avbrake{
+  0%,100%{transform:translateX(0)}
+  25%{transform:translateX(-12px) rotate(-2deg)}
+  50%{transform:translateX(4px)}
+  75%{transform:translateX(-7px) rotate(2deg)}
+}
+
+/* Dynamic scenario visual system */
+.scene{transition:background .35s ease}
+.scene .dynamic-layer{position:absolute;inset:0;pointer-events:none}
+.scene .sun{position:absolute;width:54px;height:54px;border-radius:50%;background:#fff4b0;box-shadow:0 0 38px #ffd66b;right:42px;top:48px}
+.scene .hill{position:absolute;left:-8%;right:-8%;bottom:48%;height:105px;background:#8d9b86;border-radius:50% 50% 0 0;opacity:.55}
+.scene .building{position:absolute;bottom:50%;width:72px;background:#aab4bf;border:1px solid #8e9aa6}
+.scene .building:before{content:"";position:absolute;inset:12px;background:repeating-linear-gradient(0deg,#dfe8ef 0 9px,transparent 9px 19px)}
+.scene .crosswalk{position:absolute;left:10%;right:10%;bottom:105px;height:48px;transform:skewX(-12deg);background:repeating-linear-gradient(90deg,#ffffffdd 0 22px,transparent 22px 43px)}
+.scene .vehicle{position:absolute;width:92px;height:38px;border-radius:18px 24px 9px 9px;background:#c5ccd4;box-shadow:0 7px 13px #0005}
+.scene .vehicle:after{content:"";position:absolute;left:12px;right:10px;bottom:-8px;height:15px;background:radial-gradient(circle at 18% 50%,#111 0 6px,transparent 7px),radial-gradient(circle at 82% 50%,#111 0 6px,transparent 7px)}
+.scene .truck{position:absolute;width:128px;height:68px;border-radius:8px;background:#aeb8c2;box-shadow:0 8px 15px #0005}
+.scene .person{position:absolute;width:13px;height:38px;border-radius:8px;background:#1d2939}
+.scene .person:before{content:"";position:absolute;width:14px;height:14px;border-radius:50%;background:#344054;top:-11px;left:0}
+.scene .cyclist{position:absolute;width:38px;height:21px;border-bottom:3px solid #344054}
+.scene .cyclist:before,.scene .cyclist:after{content:"";position:absolute;width:17px;height:17px;border:2px solid #344054;border-radius:50%;bottom:-10px}
+.scene .cyclist:before{left:-3px}.scene .cyclist:after{right:-3px}
+.scene .bus{position:absolute;width:142px;height:65px;border-radius:8px 13px 5px 5px;background:#d7b24b;box-shadow:0 8px 15px #0005}
+.scene .signal{position:absolute;width:22px;height:66px;border-radius:8px;background:#222;box-shadow:inset 0 0 0 2px #555}
+.scene .signal:after{content:"";position:absolute;width:12px;height:12px;border-radius:50%;background:#e5484d;left:5px;top:6px;box-shadow:0 20px 0 #e9c46a,0 40px 0 #57ab5a}
+.scene .arrow{position:absolute;height:3px;background:#66d9ff;transform-origin:left center}
+.scene .arrow:after{content:"";position:absolute;right:-2px;top:-4px;border-left:8px solid #66d9ff;border-top:5px solid transparent;border-bottom:5px solid transparent}
+.scene.phoenix{background:linear-gradient(#bfe5ff 0 42%,#dfc899 42% 50%,#3a3f46 50%)}
+.scene.california{background:linear-gradient(#cce9fa 0 42%,#b8c2bd 42% 50%,#343b43 50%)}
+.scene.newyork{background:linear-gradient(#dce8f1 0 42%,#aeb8c2 42% 50%,#30363d 50%)}
+
+@media(max-width:820px){.hero,.qwrap,.grid2{grid-template-columns:1fr}.stategrid,.compgrid{grid-template-columns:1fr}header{padding:0 16px}.card{padding:20px}}
+@media print{header,.noprint{display:none!important}body{background:white}main{width:100%;margin:0}.card{box-shadow:none;border:0}}
+</style>
+</head>
+<body>
+<div class="shell">
+<header><div class="brand">Autonomous Mobility Readiness <small>Hiring Assessment</small></div><div class="progress" id="headProgress">Prototype • 3 States</div></header>
+<main>
+<section id="screen-home" class="card hero">
+  <div>
+    <span class="kicker">Autonomous Vehicle Industry</span>
+    <h1>Read the road.<br>Predict what happens next.</h1>
+    <p class="lead">A hiring assessment combining state driving knowledge with intent prediction, spatial reasoning, occlusion awareness and complex road-risk judgment.</p>
+    <div class="steps"><span class="pill">Arizona</span><span class="pill">California</span><span class="pill">New York</span><span class="pill">15 Questions</span></div>
+    <button class="btn primary" onclick="show('register')">Begin Assessment →</button>
+    <p class="note" style="margin-top:16px">No candidate-controlled retake. Questions and answer order are randomized.</p>
+  </div>
+  <div class="roadscene">
+    <div class="city"></div><div class="roadline"></div><div class="scan"></div>
+    <div class="car" id="heroCar"><span class="sensor"></span></div>
+    <div class="heroStats">OBJECT TRACKING · ACTIVE<br>INTENT MODEL · READY<br>OCCLUSION MAP · ACTIVE</div>
+  </div>
+</section>
+
+<section id="screen-register" class="card hidden">
+  <div class="topline"><div><span class="kicker">Candidate Registration</span><h2 style="margin-top:12px">Before you start</h2></div><button class="btn ghost" onclick="show('home')">Back</button></div>
+  <p class="lead">Enter your details. Your assessment result and classification will be shown on the completion certificate.</p>
+  <div class="grid2">
+    <div><label>Full name</label><input id="name" placeholder="Candidate name"></div>
+    <div><label>Email ID</label><input id="email" type="email" placeholder="name@example.com"></div>
+  </div>
+  <div style="margin-top:22px"><button class="btn primary" onclick="goInstructions()">Continue →</button></div>
+</section>
+
+<section id="screen-instructions" class="card hidden">
+  <span class="kicker">Assessment Instructions</span><h2 style="margin-top:12px">How the assessment works</h2>
+  <div class="grid2" style="margin-top:20px">
+    <div>
+      <h3>15 questions</h3><p class="lead" style="font-size:15px">Five questions are drawn from each selected state. State knowledge is mixed with autonomous-mobility judgment.</p>
+      <h3>Immediate feedback</h3><p class="lead" style="font-size:15px">Each answer reveals the correct interpretation and an animated vehicle response.</p>
+    </div>
+    <div>
+      <h3>Decision quality first</h3><p class="lead" style="font-size:15px">Response time is recorded for analytics, but does not reduce your score.</p>
+      <h3>One attempt</h3><p class="lead" style="font-size:15px">Submitted answers cannot be changed and candidates cannot independently retake the test.</p>
+    </div>
+  </div>
+  <div style="margin-top:22px"><button class="btn primary" onclick="show('states')">Select states →</button></div>
+</section>
+
+<section id="screen-states" class="card hidden">
+ <span class="kicker">State Selection</span><h2 style="margin-top:12px">Choose your 3 assessment states</h2>
+ <p class="lead">The prototype includes three active states. The interface is structured to expand to the full U.S. map later.</p>
+ <div class="mapwrap">
+  <svg viewBox="0 0 900 320" aria-label="Stylized map of United States">
+    <path d="M80 85 L690 55 L820 135 L760 245 L560 255 L440 230 L300 260 L150 210 Z" fill="#dfe6ec" stroke="#fff" stroke-width="5"/>
+    <path id="shape-California" class="state-shape active" onclick="toggleState('California')" d="M92 88 L143 86 L162 186 L140 232 L105 195 Z"/>
+    <path id="shape-Arizona" class="state-shape active" onclick="toggleState('Arizona')" d="M161 168 L220 170 L222 233 L171 236 L145 213 Z"/>
+    <path id="shape-New York" class="state-shape active" onclick="toggleState('New York')" d="M690 82 L746 78 L762 110 L719 125 L688 111 Z"/>
+    <text x="112" y="155" font-size="12" fill="#344054">CA</text><text x="177" y="207" font-size="12" fill="#344054">AZ</text><text x="713" y="104" font-size="12" fill="#344054">NY</text>
+  </svg>
+ </div>
+ <div class="stategrid">
+   <div class="state" id="card-Arizona" onclick="toggleState('Arizona')"><strong>Arizona</strong><span>Wide arterials · glare · freeway merges · unprotected turns</span></div>
+   <div class="state" id="card-California" onclick="toggleState('California')"><strong>California</strong><span>Mixed urban traffic · cyclists · occlusion · dense intersections</span></div>
+   <div class="state" id="card-New York" onclick="toggleState('New York')"><strong>New York</strong><span>Dense curb activity · pedestrians · buses · aggressive merges</span></div>
+ </div>
+ <div style="display:flex;justify-content:space-between;align-items:center;margin-top:22px"><span id="selectionCount" class="note">0 of 3 selected</span><button class="btn primary" onclick="startAssessment()">Start assessment →</button></div>
+</section>
+
+<section id="screen-question" class="card hidden">
+ <div class="qwrap">
+   <div class="scene" id="scene">
+     <div class="dynamic-layer" id="dynamicLayer"></div>
+     <span class="tag" id="sceneTag">AV CONTEXT</span>
+     <div class="lanes"></div><div class="avcar" id="questionCar"></div>
+     <div class="obj" style="left:15%;top:40%">OBJECT 07</div><div class="obj" style="right:15%;top:36%">OBJECT 12</div>
+     <div class="occlusion" style="right:6%;bottom:125px;width:150px;height:110px"></div>
+     <div class="overlay" id="sceneOverlay">PERCEPTION OVERLAY<br>Trajectory confidence: 0.78<br>Occlusion region: detected</div>
+   </div>
+   <div>
+     <div class="qhead"><div><div class="qnum" id="qnum"></div><div id="competency" class="pill" style="display:inline-flex;margin-top:6px"></div></div><div id="timer" class="pill"></div></div>
+     <div class="question" id="question"></div>
+     <div class="options" id="options"></div>
+     <div id="feedback" class="feedback hidden"></div>
+     <div id="nextArea" class="hidden" style="margin-top:18px"><button class="btn primary" onclick="nextQuestion()">Next →</button></div>
+   </div>
+ </div>
+ <div class="bar"><div id="progressBar"></div></div>
+</section>
+
+<section id="screen-results" class="card hidden">
+ <span class="kicker">Assessment Complete</span>
+ <div class="scoreHero" style="margin-top:14px"><div><div class="note" style="color:#d0d5dd">OVERALL SCORE</div><div class="scoreBig" id="scoreBig">0%</div></div><div style="text-align:right"><div class="badge" id="classification">—</div><div id="criticalText" style="font-size:12px;color:#d0d5dd;margin-top:10px"></div></div></div>
+ <h3 style="margin-top:26px">Competency snapshot</h3><div class="compgrid" id="compgrid"></div>
+ <h3>State performance</h3><table class="table"><thead><tr><th>State</th><th>Correct</th><th>Score</th></tr></thead><tbody id="stateTable"></tbody></table>
+ <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:22px"><button class="btn primary" onclick="showCertificate()">View certificate</button><button class="btn secondary" onclick="showRecruiter()">Recruiter view</button></div>
+ <p class="note" style="margin-top:16px">Response time is diagnostic only. Critical safety misses are shown separately.</p>
+</section>
+
+<section id="screen-recruiter" class="card hidden">
+ <div class="topline"><div><span class="kicker">Recruiter Analytics</span><h2 style="margin-top:12px">Hiring signal</h2></div><button class="btn ghost" onclick="show('results')">Back</button></div>
+ <div id="recruiterContent"></div>
+</section>
+
+<section id="screen-certificate" class="card hidden">
+ <div class="noprint" style="display:flex;justify-content:flex-end;gap:10px;margin-bottom:16px"><button class="btn ghost" onclick="show('results')">Back</button><button class="btn primary" onclick="window.print()">Print / Save PDF</button></div>
+ <div class="certificate">
+   <div class="kicker">Certificate of Assessment Completion</div>
+   <div class="certTitle" style="margin-top:18px">Autonomous Mobility Readiness Assessment</div>
+   <div class="note" style="margin-top:14px">This certifies that</div>
+   <div class="certName" id="certName">Candidate Name</div>
+   <div class="note">completed an autonomous-vehicle hiring assessment covering U.S. driving context, intent prediction, spatial reasoning, risk recognition and complex decision-making.</div>
+   <div style="margin:28px auto;width:min(620px,100%);display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+     <div><div class="note">SCORE</div><strong id="certScore" style="font-size:24px"></strong></div>
+     <div><div class="note">CLASSIFICATION</div><strong id="certClass" style="font-size:18px"></strong></div>
+     <div><div class="note">DATE</div><strong id="certDate"></strong></div>
+   </div>
+   <div class="note">States assessed</div><strong>Arizona · California · New York</strong>
+   <div class="note" id="certId" style="margin-top:24px"></div>
+ </div>
+</section>
+</main>
+</div>
+<script>
+const BANKS = {"Arizona": [{"type": "rule", "comp": "Driving & State Knowledge", "critical": false, "q": "At a four-way stop, two vehicles arrive at the same time. Which vehicle should normally proceed first?", "o": ["The vehicle on the left", "The vehicle on the right", "The larger vehicle", "The vehicle traveling faster"], "a": 1, "e": "When vehicles arrive at the same time, yield to the vehicle on the right."}, {"type": "rule", "comp": "Driving & State Knowledge", "critical": false, "q": "A traffic signal is flashing red. What is the correct action?", "o": ["Slow and continue", "Stop, then proceed when safe", "Treat it as a green light", "Only stop if pedestrians are present"], "a": 1, "e": "A flashing red signal is treated like a stop sign: stop fully, then proceed when safe."}, {"type": "rule", "comp": "Driving & State Knowledge", "critical": true, "q": "A school bus ahead has stopped with red lights flashing and its stop arm extended. What should the driver do?", "o": ["Pass slowly", "Stop as required and wait until it is safe and lawful to proceed", "Honk and pass on the left", "Continue if no child is visible"], "a": 1, "e": "A stopped school bus with active red warning signals is a safety-critical condition. Do not pass when a stop is required."}, {"type": "rule", "comp": "Driving & State Knowledge", "critical": false, "q": "Before turning right on red where it is permitted, what must a driver do?", "o": ["Slow only", "Stop fully, check restrictions, and yield before turning", "Enter the crosswalk to improve visibility", "Turn immediately if the lane appears clear"], "a": 1, "e": "A right turn on red requires a full stop and yielding to road users with the right-of-way, unless prohibited."}, {"type": "rule", "comp": "Driving & State Knowledge", "critical": false, "q": "A YIELD sign requires a driver to:", "o": ["Always stop for five seconds", "Slow and give right-of-way, stopping if needed", "Speed up to merge first", "Ignore pedestrians outside marked crosswalks"], "a": 1, "e": "Yield means reduce speed and give right-of-way; a full stop is required when necessary."}, {"type": "rule", "comp": "Driving & State Knowledge", "critical": false, "q": "When entering a freeway from an acceleration lane, the safest approach is to:", "o": ["Stop at the end of the ramp", "Match traffic speed when possible and merge into a safe gap", "Enter immediately at low speed", "Force freeway traffic to yield"], "a": 1, "e": "Use the acceleration lane to build an appropriate speed and merge into a safe available gap."}, {"type": "rule", "comp": "Driving & State Knowledge", "critical": false, "q": "What does a solid yellow center line on your side generally indicate?", "o": ["Passing is always permitted", "Passing across the line is restricted", "The lane is for bicycles", "Traffic moves in the same direction"], "a": 1, "e": "A solid yellow line indicates a restriction on crossing into opposing traffic for passing."}, {"type": "rule", "comp": "Driving & State Knowledge", "critical": false, "q": "When an emergency vehicle approaches using lights and siren, a driver should generally:", "o": ["Maintain speed", "Pull over safely and yield", "Stop in the intersection", "Follow closely behind it"], "a": 1, "e": "Drivers should yield to an approaching emergency vehicle and move out of its path safely."}, {"type": "rule", "comp": "Driving & State Knowledge", "critical": false, "q": "At an uncontrolled intersection, the safest first action is to:", "o": ["Accelerate through", "Scan for vehicles, cyclists, and pedestrians and be ready to yield", "Rely on the other driver to stop", "Use the horn and continue"], "a": 1, "e": "Uncontrolled intersections require active scanning and readiness to yield."}, {"type": "rule", "comp": "Driving & State Knowledge", "critical": false, "q": "When strong sun glare reduces visibility, the safest behavior is to:", "o": ["Maintain speed to leave the glare quickly", "Reduce speed and increase space while scanning carefully", "Turn on hazard lights and stop in the travel lane", "Follow the vehicle ahead more closely"], "a": 1, "e": "Reduced visibility calls for more space, lower speed, and greater scanning discipline."}, {"type": "behavior", "comp": "Intent Prediction", "critical": false, "q": "Phoenix arterial: a car in the lane to your left drifts toward the lane divider while slowing near an upcoming right-turn entrance. What is the best prediction?", "o": ["It will certainly stop", "It may make a late lane change or turn", "It is parked", "It will accelerate straight ahead"], "a": 1, "e": "Lane drift plus speed reduction near an access point are useful intent cues; anticipate a possible late maneuver."}, {"type": "behavior", "comp": "Spatial / Occlusion Reasoning", "critical": true, "q": "A large pickup blocks your view of the sidewalk near a crosswalk. What is the most important hidden-risk assumption?", "o": ["The sidewalk is empty", "A pedestrian or cyclist may emerge from the occluded area", "Only vehicles matter", "The pickup will reverse"], "a": 1, "e": "Occlusion should increase caution because vulnerable road users can emerge with little warning."}, {"type": "behavior", "comp": "Risk Recognition", "critical": false, "q": "A pedestrian stands at the edge of a wide Phoenix road looking repeatedly toward traffic. Which cue matters most?", "o": ["Their clothing color", "Their body orientation and repeated traffic checks", "The vehicle behind them", "The width of the sidewalk"], "a": 1, "e": "Body orientation and repeated scanning can indicate developing crossing intent."}, {"type": "behavior", "comp": "Complex Decision-Making", "critical": false, "q": "At a multilane intersection, one vehicle is turning left, a cyclist is approaching the crosswalk, and a pedestrian has stepped off the curb. Who deserves highest immediate attention?", "o": ["The left-turning vehicle only", "The pedestrian already entering the conflict area", "The cyclist only", "All actors are equally urgent"], "a": 1, "e": "A pedestrian already entering the conflict area is the most immediate vulnerable-road-user hazard."}, {"type": "behavior", "comp": "Intent Prediction", "critical": false, "q": "A vehicle on a freeway on-ramp is rapidly closing the gap to your lane. Its indicator is off. What should you predict?", "o": ["It cannot merge without signaling", "A merge is still possible; trajectory matters more than signal alone", "It will stop", "It must stay on the shoulder"], "a": 1, "e": "Signals are only one cue. Position, speed, ramp geometry, and closing trajectory can indicate likely merge intent."}, {"type": "behavior", "comp": "Spatial / Occlusion Reasoning", "critical": false, "q": "A box truck turns right ahead of the AV, briefly hiding the far side of the intersection. What should happen to confidence about the hidden area?", "o": ["Increase", "Decrease until the area is observable again", "Stay unchanged", "Become 100% because the truck moved"], "a": 1, "e": "Visibility loss should reduce confidence about actors and movement in the hidden zone."}, {"type": "behavior", "comp": "Risk Recognition", "critical": false, "q": "A cyclist is riding near parked cars. Which additional hazard should be anticipated?", "o": ["Only a tire puncture", "A door opening or cyclist moving outward to avoid a door", "The cyclist disappearing permanently", "A mandatory U-turn"], "a": 1, "e": "Parked-car doors can push a cyclist into the travel lane with little warning."}, {"type": "behavior", "comp": "Intent Prediction", "critical": false, "q": "A car approaches an intersection quickly, then brakes late with its front wheels angled left. What is the strongest intent clue?", "o": ["Vehicle color", "Wheel angle combined with deceleration", "Time of day", "Number plate position"], "a": 1, "e": "Wheel orientation plus deceleration provides a direct cue about a likely turn."}, {"type": "behavior", "comp": "Complex Decision-Making", "critical": true, "q": "An AV has a green signal, but a pedestrian is still crossing in front of it. What is the correct safety interpretation?", "o": ["Green means proceed immediately", "The pedestrian remains the controlling hazard; do not enter their path", "Sound the horn and continue", "Drive around the pedestrian"], "a": 1, "e": "A green signal does not override an occupied conflict area. Avoid entering the pedestrian's path."}, {"type": "behavior", "comp": "Risk Recognition", "critical": false, "q": "A vehicle ahead repeatedly varies speed and touches the lane markings. What is the best interpretation?", "o": ["Assume perfect lane keeping", "Treat the behavior as unpredictable and increase safety margin", "Immediately overtake on either side", "Ignore it until a signal appears"], "a": 1, "e": "Inconsistent speed and lateral control are uncertainty cues; increase space and reduce reliance on predictable behavior."}, {"type": "behavior", "comp": "Spatial / Occlusion Reasoning", "critical": false, "q": "At dusk, a pedestrian is partly hidden in deep shadow beside a brightly lit roadway. What should an AV analyst infer?", "o": ["Low contrast can hide a real actor", "Dark areas are safe", "Only lidar can matter", "The actor is not relevant until centered in the lane"], "a": 0, "e": "Contrast changes and glare can make real road users harder to perceive; hidden-space reasoning remains important."}, {"type": "behavior", "comp": "Intent Prediction", "critical": false, "q": "A pickup ahead begins moving toward a driveway without signaling, while its speed drops steadily. Which prediction is most reasonable?", "o": ["Possible driveway turn", "Guaranteed straight travel", "Emergency stop only", "Lane closure ahead"], "a": 0, "e": "Speed reduction plus lateral movement toward an access point supports a turn-intent hypothesis."}, {"type": "behavior", "comp": "Complex Decision-Making", "critical": false, "q": "A cyclist, right-turning car, and pedestrian converge near a corner. What should the analyst prioritize first?", "o": ["Single-object labels only", "Potential path conflicts and which actor can enter the AV path soonest", "The largest object", "The fastest object only"], "a": 1, "e": "Complex scenes require conflict-point reasoning, not simply ranking actors by size or speed."}, {"type": "behavior", "comp": "Risk Recognition", "critical": false, "q": "A construction worker near the roadway is facing traffic and gesturing. What is the most important interpretation?", "o": ["Gestures may temporarily control traffic flow", "Only fixed traffic lights matter", "Construction workers never affect right-of-way", "The worker can be ignored outside a lane"], "a": 0, "e": "Human traffic control can supersede normal expectations and must be interpreted as a dynamic control signal."}, {"type": "behavior", "comp": "Spatial / Occlusion Reasoning", "critical": false, "q": "Two tall SUVs are parked immediately before a crosswalk. What is the best attention strategy?", "o": ["Focus only on the signal", "Treat the space between/behind SUVs and curb as an occlusion zone", "Assume no pedestrian can fit there", "Accelerate to clear the crosswalk"], "a": 1, "e": "Parked vehicles close to a crosswalk create hidden zones where pedestrians can emerge suddenly."}], "California": [{"type": "rule", "comp": "Driving & State Knowledge", "critical": false, "q": "In California, a solid red traffic light generally allows a right turn when:", "o": ["You slow but do not stop", "There is no NO TURN ON RED sign, you stop, yield, and the turn is safe", "Only after another car turns", "Pedestrians are standing on the sidewalk"], "a": 1, "e": "California permits right turn on red after a full stop and yielding when no sign prohibits it."}, {"type": "rule", "comp": "Driving & State Knowledge", "critical": false, "q": "What does a red arrow mean in California?", "o": ["Turn after yielding", "Stop and do not turn until a green signal or arrow allows it", "Proceed if no pedestrians are visible", "Treat it like a flashing red"], "a": 1, "e": "California DMV states that a red arrow means stop and do not turn until a green signal or green arrow appears."}, {"type": "rule", "comp": "Driving & State Knowledge", "critical": false, "q": "A flashing yellow arrow means:", "o": ["Protected turn", "Turn is permitted after yielding to oncoming traffic and proceeding with caution", "Full stop required", "Turn prohibited"], "a": 1, "e": "The turn is not protected; yield to oncoming traffic and proceed cautiously."}, {"type": "rule", "comp": "Driving & State Knowledge", "critical": false, "q": "If a traffic light is not working in California, drivers should:", "o": ["Treat it as uncontrolled and accelerate", "Stop as if the intersection has STOP signs in all directions", "Only yield to vehicles on the left", "Wait for police"], "a": 1, "e": "California DMV directs drivers to stop as though all directions are controlled by STOP signs, then proceed when safe."}, {"type": "rule", "comp": "Driving & State Knowledge", "critical": false, "q": "At a STOP sign with a marked limit line, where should the vehicle stop?", "o": ["Past the crosswalk", "Before the limit line", "In the middle of the intersection", "Wherever visibility is best"], "a": 1, "e": "Make a full stop before the crosswalk or at the limit line."}, {"type": "rule", "comp": "Driving & State Knowledge", "critical": false, "q": "At an uncontrolled intersection in California, if two road users arrive at the same time, you should generally yield to:", "o": ["The road user on your right", "The road user on your left", "The larger vehicle", "Whichever vehicle honks"], "a": 0, "e": "When arriving at the same time, give right-of-way to the road user on your right."}, {"type": "rule", "comp": "Driving & State Knowledge", "critical": true, "q": "A pedestrian is crossing the roadway, even though the crosswalk markings are faded. What should the driver do?", "o": ["Maintain speed because the markings are unclear", "Use caution, reduce speed or stop to allow safe crossing", "Pass behind the pedestrian at normal speed", "Honk to make the pedestrian stop"], "a": 1, "e": "California requires caution and yielding to pedestrians crossing the roadway; crosswalks may be marked or unmarked."}, {"type": "rule", "comp": "Driving & State Knowledge", "critical": false, "q": "When entering a roundabout in California, a driver should:", "o": ["Enter before circulating traffic", "Yield to traffic already in the roundabout", "Stop inside the roundabout", "Drive clockwise"], "a": 1, "e": "Slow, yield to circulating traffic, then enter when a safe gap is available."}, {"type": "rule", "comp": "Driving & State Knowledge", "critical": false, "q": "California DMV recommends scanning the road approximately how far ahead?", "o": ["2 seconds", "5 seconds", "At least 10 seconds", "Only to the vehicle directly ahead"], "a": 2, "e": "The California handbook recommends scanning at least 10 seconds ahead to improve reaction time."}, {"type": "rule", "comp": "Driving & State Knowledge", "critical": false, "q": "California DMV's basic following-distance guidance uses which rule?", "o": ["One-second rule", "Three-second rule", "Ten-foot rule", "Half-second rule"], "a": 1, "e": "The handbook recommends the three-second rule as a basic safe following-distance guideline."}, {"type": "behavior", "comp": "Spatial / Occlusion Reasoning", "critical": true, "q": "San Francisco: a delivery van is double-parked just before a crosswalk, blocking the curb view. What should be treated as the highest hidden risk?", "o": ["Only the van door", "A pedestrian or cyclist emerging from the occluded curb area", "The building entrance", "The traffic light changing"], "a": 1, "e": "A large stopped vehicle before a crossing creates a high-value occlusion zone for vulnerable road users."}, {"type": "behavior", "comp": "Intent Prediction", "critical": false, "q": "A cyclist approaches on the right of a vehicle that is slowing near a corner. What should be anticipated?", "o": ["No conflict is possible", "Potential right-turn/cyclist path conflict", "The cyclist must stop automatically", "Only the vehicle's turn signal matters"], "a": 1, "e": "A turning vehicle and a through-moving cyclist can have intersecting trajectories even if one signal is absent."}, {"type": "behavior", "comp": "Risk Recognition", "critical": false, "q": "A passenger begins opening a door from a parked car next to a bike lane. Which risk is most immediate?", "o": ["The car will reverse", "A cyclist may swerve into the travel lane to avoid the door", "The signal will change", "The pedestrian light will activate"], "a": 1, "e": "Dooring risk can force cyclists abruptly into adjacent vehicle space."}, {"type": "behavior", "comp": "Intent Prediction", "critical": false, "q": "A pedestrian at a San Francisco corner looks toward traffic, shifts weight forward, and steps close to the curb. What is the best prediction?", "o": ["Crossing intent may be developing", "They will definitely turn around", "They are waiting for a bus", "No intent can be inferred"], "a": 0, "e": "Body orientation, gaze, and weight shift are useful pre-crossing intent cues."}, {"type": "behavior", "comp": "Complex Decision-Making", "critical": false, "q": "On a narrow street, an oncoming vehicle meets a double-parked delivery truck on your side. Which factor matters most?", "o": ["Vehicle brand", "Available lateral space and predicted negotiation between road users", "License plate color", "Which car is newer"], "a": 1, "e": "Constrained geometry requires reasoning about usable space and likely negotiation, not superficial object attributes."}, {"type": "behavior", "comp": "Risk Recognition", "critical": false, "q": "A motorcycle is traveling alongside the AV near the edge of a lane. What is the safest interpretation before a lane change?", "o": ["It is too small to matter", "It may occupy a blind zone; confirm its position and trajectory", "It will always accelerate", "Motorcycles must yield"], "a": 1, "e": "Smaller road users can remain in blind zones and require explicit spatial awareness before lateral movement."}, {"type": "behavior", "comp": "Spatial / Occlusion Reasoning", "critical": false, "q": "A steep hill blocks the view of the roadway beyond the crest. What should happen to prediction confidence for unseen actors?", "o": ["Increase", "Decrease because road geometry creates occlusion", "Remain at 100%", "Depend only on posted speed"], "a": 1, "e": "Vertical road geometry can create occlusion just as parked objects can."}, {"type": "behavior", "comp": "Intent Prediction", "critical": false, "q": "A bus at the curb activates its left indicator and begins angling outward. What is the most likely near-term behavior?", "o": ["Remain parked indefinitely", "Re-enter the travel lane", "Make a U-turn", "Reverse into the sidewalk"], "a": 1, "e": "Indicator, wheel angle, and vehicle motion together point to a likely merge from the curb."}, {"type": "behavior", "comp": "Complex Decision-Making", "critical": true, "q": "The AV has a green light. A cyclist has entered the intersection against the signal. What should the analyst prioritize?", "o": ["Legal right-of-way only", "Actual collision risk and the cyclist's trajectory", "The green light means no response is needed", "Accelerating before cross traffic starts"], "a": 1, "e": "Safety reasoning must account for actual actor behavior, even when another road user is violating a rule."}, {"type": "behavior", "comp": "Spatial / Occlusion Reasoning", "critical": false, "q": "A stopped SUV ahead blocks the view of a marked crosswalk. Another car in the adjacent lane has also stopped. What should that combination suggest?", "o": ["The signal must be broken", "A hidden pedestrian may be crossing", "The adjacent driver is parking", "The road is empty"], "a": 1, "e": "Multiple vehicles stopping near a crosswalk can be an indirect cue that a vulnerable road user is present but hidden."}, {"type": "behavior", "comp": "Risk Recognition", "critical": false, "q": "A car ahead begins a sudden lateral move with no signal while a cyclist is beside it. Which risk should be evaluated first?", "o": ["Fuel use", "Immediate path overlap between car and cyclist", "Road name", "Vehicle age"], "a": 1, "e": "The highest-value cue is whether their trajectories are about to intersect."}, {"type": "behavior", "comp": "Intent Prediction", "critical": false, "q": "A pedestrian walking parallel to the road suddenly turns their head toward the opposite curb. What does this change imply?", "o": ["Possible change in crossing intent", "Guaranteed stop", "They are checking a building sign", "No relevance"], "a": 0, "e": "A change in gaze and orientation can signal a new intended path and should update prediction."}, {"type": "behavior", "comp": "Complex Decision-Making", "critical": false, "q": "At a busy intersection, a turning car, through cyclist, and crossing pedestrian all occupy different trajectories. What is the best analysis method?", "o": ["Prioritize the largest object", "Map likely paths and conflict points", "Choose whichever actor is closest to the camera", "Ignore actors outside the ego lane"], "a": 1, "e": "Trajectory and conflict-point reasoning is the clearest way to prioritize multi-actor scenes."}, {"type": "behavior", "comp": "Risk Recognition", "critical": false, "q": "A vehicle ahead brakes despite a green signal. What should an analyst infer first?", "o": ["The driver is wrong", "There may be a hazard not yet visible to the AV", "The traffic light is definitely malfunctioning", "The vehicle is parking"], "a": 1, "e": "Unexpected braking by another road user can be an indirect cue of an occluded or emerging hazard."}, {"type": "behavior", "comp": "Spatial / Occlusion Reasoning", "critical": false, "q": "A cyclist disappears behind a moving bus for two seconds. What is the best prediction strategy?", "o": ["Delete the cyclist from consideration", "Maintain a plausible trajectory hypothesis until visibility returns", "Assume the cyclist stopped", "Assume the cyclist turned away"], "a": 1, "e": "Temporary occlusion should not erase a tracked actor; maintain a reasonable motion hypothesis with lower confidence."}], "New York": [{"type": "rule", "comp": "Driving & State Knowledge", "critical": false, "q": "In New York City, a right turn on red is generally:", "o": ["Always allowed after stopping", "Prohibited unless a sign permits it", "Allowed only for taxis", "Required when traffic is clear"], "a": 1, "e": "NYC generally prohibits right turns on red unless a sign specifically allows the turn."}, {"type": "rule", "comp": "Driving & State Knowledge", "critical": false, "q": "At an intersection without signs or signals, who generally has the right-of-way when two drivers reach it at the same time?", "o": ["Driver on the left", "Driver on the right", "Faster driver", "Larger vehicle"], "a": 1, "e": "At the same-time arrival, the driver on the left yields to the driver on the right."}, {"type": "rule", "comp": "Driving & State Knowledge", "critical": true, "q": "A school bus is stopped with red lights flashing. What should a driver do when a stop is required?", "o": ["Pass at 10 mph", "Stop and remain stopped until the bus signals allow lawful movement", "Honk and proceed", "Pass if no child is visible"], "a": 1, "e": "School-bus red lights are a safety-critical stop condition under New York rules."}, {"type": "rule", "comp": "Driving & State Knowledge", "critical": false, "q": "A driver approaching a marked crosswalk with a pedestrian in it should:", "o": ["Yield and allow the pedestrian to cross safely", "Continue if the light is green", "Drive around the pedestrian", "Use the horn to claim priority"], "a": 0, "e": "Drivers must yield to pedestrians occupying a crosswalk."}, {"type": "rule", "comp": "Driving & State Knowledge", "critical": false, "q": "When an emergency vehicle approaches using lights and siren, a driver should generally:", "o": ["Continue at the same speed", "Yield and move safely out of the way", "Stop in the center of the intersection", "Follow it through traffic"], "a": 1, "e": "Drivers must yield to approaching emergency vehicles and avoid blocking their path."}, {"type": "rule", "comp": "Driving & State Knowledge", "critical": false, "q": "A steady red traffic signal requires a driver to:", "o": ["Slow only", "Stop before entering the intersection or crosswalk", "Proceed if no vehicles are visible", "Stop only at night"], "a": 1, "e": "A steady red signal requires a full stop before proceeding under any permitted movement."}, {"type": "rule", "comp": "Driving & State Knowledge", "critical": false, "q": "When passing is prohibited by pavement markings, a driver should:", "o": ["Cross if the road looks clear", "Remain in the permitted lane", "Pass using the shoulder", "Use hazard lights and pass"], "a": 1, "e": "Pavement markings communicate where crossing or passing is restricted."}, {"type": "rule", "comp": "Driving & State Knowledge", "critical": false, "q": "When entering an expressway, a driver should:", "o": ["Stop on the ramp unless waved in", "Use the entrance lane to build speed and merge into a safe gap", "Enter at any speed because through traffic must stop", "Drive on the shoulder until a gap appears"], "a": 1, "e": "Safe expressway entry requires speed adjustment, observation, and merging into an available gap."}, {"type": "rule", "comp": "Driving & State Knowledge", "critical": false, "q": "At a roundabout, which traffic has priority?", "o": ["Traffic entering the roundabout", "Traffic already circulating", "Only buses", "The vehicle on the left shoulder"], "a": 1, "e": "Entering drivers yield to traffic already circulating in the roundabout."}, {"type": "rule", "comp": "Driving & State Knowledge", "critical": false, "q": "A driver approaching a pedestrian using a white cane should:", "o": ["Assume the person can see the vehicle", "Exercise heightened caution and yield as required", "Honk continuously", "Pass quickly before they step out"], "a": 1, "e": "A white cane can indicate visual impairment; heightened caution and yielding are essential."}, {"type": "behavior", "comp": "Intent Prediction", "critical": false, "q": "Manhattan-style traffic: a taxi slows abruptly beside the curb with no hazard lights. What should be anticipated?", "o": ["Possible passenger pickup/drop-off or curb maneuver", "Guaranteed U-turn", "The taxi has broken down", "No behavior change"], "a": 0, "e": "Curbside slowing can indicate a pickup/drop-off or sudden stopping maneuver; context matters even without signals."}, {"type": "behavior", "comp": "Spatial / Occlusion Reasoning", "critical": true, "q": "A delivery van is double-parked before an intersection, blocking the near curb. What is the highest-value hidden-risk assumption?", "o": ["Only parked cars matter", "A pedestrian, cyclist, or vehicle may emerge from the occluded area", "The curb is empty", "The traffic signal will stay green"], "a": 1, "e": "Dense curbside environments create high-probability occlusion zones for multiple road-user types."}, {"type": "behavior", "comp": "Intent Prediction", "critical": false, "q": "A pedestrian steps between parked cars and looks toward the opposite sidewalk. Which prediction is strongest?", "o": ["Possible roadway crossing", "They will return to the parked car", "They are checking traffic only for someone else", "No useful inference"], "a": 0, "e": "Position change plus gaze toward the opposite side can indicate emerging crossing intent."}, {"type": "behavior", "comp": "Risk Recognition", "critical": false, "q": "A bus is stopped at the curb while pedestrians cluster near its front. What additional risk should be anticipated?", "o": ["Pedestrians may cross in front of the bus where visibility is poor", "The bus will reverse rapidly", "All pedestrians will remain on the sidewalk", "The lane is permanently closed"], "a": 0, "e": "The bus can occlude pedestrians who step into the road near its front."}, {"type": "behavior", "comp": "Complex Decision-Making", "critical": false, "q": "A taxi is merging left, a cyclist is filtering forward, and a pedestrian begins crossing. Which analysis is best?", "o": ["Choose the biggest vehicle", "Compare trajectories and identify the earliest conflict with the AV path", "Track only the pedestrian", "Track only the taxi"], "a": 1, "e": "Multi-actor risk is best prioritized by predicted trajectory and time to conflict."}, {"type": "behavior", "comp": "Risk Recognition", "critical": false, "q": "A vehicle ahead stops unexpectedly before an apparently clear crosswalk. What should that behavior suggest?", "o": ["Possible hidden pedestrian or cyclist", "The driver is definitely distracted", "The road is empty", "The light must be red"], "a": 0, "e": "Another driver's unexplained stop can be an indirect signal that they see a hazard obscured from the AV."}, {"type": "behavior", "comp": "Spatial / Occlusion Reasoning", "critical": false, "q": "A large truck turns across the AV's view and temporarily blocks an entire cross street. What should happen to certainty about that cross street?", "o": ["Remain unchanged", "Decrease until visibility returns or other reliable evidence resolves it", "Increase because the truck is moving", "Become irrelevant"], "a": 1, "e": "When the scene becomes occluded, confidence about unseen actor states should decrease."}, {"type": "behavior", "comp": "Intent Prediction", "critical": false, "q": "A cyclist near a one-way intersection glances over their shoulder and moves toward the center of the lane. What may this indicate?", "o": ["Possible turn or lane-position change", "The cyclist is stopping permanently", "The cyclist has no intent", "A pedestrian is crossing"], "a": 0, "e": "Shoulder checks and lateral positioning often precede a turn or lane change."}, {"type": "behavior", "comp": "Risk Recognition", "critical": false, "q": "A car door begins opening from the traffic side of a parked vehicle. Which nearby actor becomes especially important?", "o": ["A cyclist approaching from behind", "A pedestrian on the far sidewalk", "A vehicle two blocks away", "A train underground"], "a": 0, "e": "An opening door can force a cyclist or scooter rider abruptly into the active lane."}, {"type": "behavior", "comp": "Complex Decision-Making", "critical": true, "q": "The AV has right-of-way, but an aggressive driver begins forcing into the lane with very small clearance. What should govern the safety judgment?", "o": ["Right-of-way means maintain course regardless", "Actual collision risk and safe space, not entitlement", "Accelerate to block the merge", "Ignore the vehicle until fully in lane"], "a": 1, "e": "Operational safety depends on real behavior and available space, not simply legal right-of-way."}, {"type": "behavior", "comp": "Intent Prediction", "critical": false, "q": "A vehicle slows near a hydrant, activates hazards, and shifts toward the curb. What is the strongest likely intent?", "o": ["Curbside stop", "High-speed pass", "Immediate U-turn", "Entering a tunnel"], "a": 0, "e": "Deceleration, hazard activation, and lateral movement toward the curb strongly support a stopping hypothesis."}, {"type": "behavior", "comp": "Spatial / Occlusion Reasoning", "critical": false, "q": "A pedestrian is visible only from the knees down between parked vehicles. What should the analyst do?", "o": ["Ignore until the full body is visible", "Treat the partial detection as a meaningful occlusion cue and anticipate emergence", "Assume the person is stationary", "Assume it is a road sign"], "a": 1, "e": "Partial visibility can be enough to infer a hidden actor and should raise attention to the occluded space."}, {"type": "behavior", "comp": "Risk Recognition", "critical": false, "q": "A cyclist is traveling to the right of a bus that is preparing to pull toward the curb. What is the key risk?", "o": ["Path compression between bus and curb", "The cyclist will always stop", "The bus cannot move laterally", "Only rear-end collision matters"], "a": 0, "e": "The available lateral corridor can shrink quickly when a large vehicle moves toward the curb."}, {"type": "behavior", "comp": "Complex Decision-Making", "critical": false, "q": "At a crowded intersection, a pedestrian violates the signal while a turning vehicle has a legal green. What should the analyst focus on?", "o": ["Who is legally correct", "Which trajectories create an immediate conflict and how to avoid it", "The color of the traffic light only", "Whether the pedestrian should receive a ticket"], "a": 1, "e": "Intent prediction and safety analysis must account for actual behavior even when it violates traffic rules."}, {"type": "behavior", "comp": "Intent Prediction", "critical": false, "q": "A driver ahead repeatedly checks the side mirror and drifts toward a lane boundary. Which next action is plausible?", "o": ["Lane change", "Parking brake use", "Engine shutdown", "Pedestrian crossing"], "a": 0, "e": "Mirror checks and lateral drift are common precursors to a lane change, even if a turn signal has not appeared."}]};
+const screens = ["home","register","instructions","states","question","results","recruiter","certificate"];
+let selectedStates = [];
+let test = [], idx = 0, answers = [], startTime = 0, timerInt = null;
+
+function show(id) {
+  screens.forEach(s => document.getElementById("screen-"+s).classList.toggle("hidden", s!==id));
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function goInstructions(){
+  const name=document.getElementById("name").value.trim(), email=document.getElementById("email").value.trim();
+  if(!name || !/^\S+@\S+\.\S+$/.test(email)){alert("Please enter your full name and a valid email ID.");return;}
+  show("instructions");
+}
+function toggleState(s){
+  const i=selectedStates.indexOf(s);
+  if(i>=0) selectedStates.splice(i,1); else if(selectedStates.length<3) selectedStates.push(s);
+  ["Arizona","California","New York"].forEach(x=>{
+    document.getElementById("card-"+x).classList.toggle("selected",selectedStates.includes(x));
+    document.getElementById("shape-"+x).classList.toggle("pick",selectedStates.includes(x));
+  });
+  document.getElementById("selectionCount").textContent=selectedStates.length+" of 3 selected";
+}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function balancedFive(bank){
+  const rules=shuffle(bank.filter(q=>q.type==="rule").slice());
+  const beh=shuffle(bank.filter(q=>q.type==="behavior").slice());
+  return shuffle(rules.slice(0,2).concat(beh.slice(0,3)));
+}
+function startAssessment(){
+  if(selectedStates.length!==3){alert("Please select all 3 available states for this prototype.");return;}
+  test=[];
+  selectedStates.forEach(s=> balancedFive(BANKS[s]).forEach(q=>test.push({...q,state:s})));
+  // keep state blocks but randomize inside; promotes 5/state structure while preventing predictable ordering
+  idx=0; answers=[]; show("question"); renderQuestion();
+}
+
+function buildScene(q){
+  const scene=document.getElementById("scene"), layer=document.getElementById("dynamicLayer");
+  scene.classList.remove("phoenix","california","newyork");
+  scene.classList.add(q.state==="Arizona"?"phoenix":q.state==="California"?"california":"newyork");
+
+  const text=(q.q+" "+q.e).toLowerCase();
+  let h="";
+
+  // Regional background
+  if(q.state==="Arizona"){
+    h+='<div class="sun"></div>';
+    if(text.includes("freeway")||text.includes("ramp")) h+='<div class="vehicle" style="left:10%;bottom:155px"></div><div class="vehicle" style="right:12%;bottom:88px"></div>';
+  } else if(q.state==="California"){
+    h+='<div class="hill"></div><div class="building" style="left:7%;height:118px"></div><div class="building" style="right:8%;height:148px"></div>';
+  } else {
+    h+='<div class="building" style="left:4%;height:170px"></div><div class="building" style="left:17%;height:135px"></div><div class="building" style="right:5%;height:190px"></div><div class="building" style="right:20%;height:150px"></div>';
+  }
+
+  // Question-specific actors and geometry
+  if(text.includes("crosswalk")||text.includes("pedestrian")) h+='<div class="crosswalk"></div><div class="person" style="left:27%;bottom:160px"></div>';
+  if(text.includes("cyclist")||text.includes("bicycle")) h+='<div class="cyclist" style="right:21%;bottom:154px"></div>';
+  if(text.includes("school bus")||text.includes("bus ")) h+='<div class="bus" style="right:11%;bottom:118px"></div>';
+  if(text.includes("truck")||text.includes("van")||text.includes("pickup")) h+='<div class="truck" style="right:8%;bottom:115px"></div>';
+  if(text.includes("taxi")||text.includes("vehicle")||text.includes("car ")) h+='<div class="vehicle" style="left:14%;bottom:120px"></div>';
+  if(text.includes("red")||text.includes("signal")||text.includes("intersection")) h+='<div class="signal" style="right:25%;top:92px"></div>';
+  if(text.includes("occlu")||text.includes("hidden")||text.includes("blocks your view")) h+='<div class="occlusion" style="right:4%;bottom:115px;width:175px;height:125px"></div>';
+  if(text.includes("merge")||text.includes("lane change")||text.includes("trajectory")) h+='<div class="arrow" style="left:20%;bottom:170px;width:150px;transform:rotate(-12deg)"></div>';
+  if(text.includes("turn")) h+='<div class="arrow" style="right:18%;bottom:185px;width:115px;transform:rotate(28deg)"></div>';
+
+  layer.innerHTML=h;
+}
+
+function renderQuestion(){
+  clearInterval(timerInt);
+  const q=test[idx]; startTime=Date.now(); buildScene(q);
+  const qc=document.getElementById("questionCar");
+  qc.classList.remove("correct-run","wrong-stop");
+  qc.style.left="42%";
+  document.getElementById("qnum").textContent=`Question ${idx+1} of ${test.length} · ${q.state}`;
+  document.getElementById("competency").textContent=q.comp;
+  document.getElementById("question").textContent=q.q;
+  document.getElementById("feedback").className="feedback hidden"; document.getElementById("feedback").innerHTML="";
+  document.getElementById("nextArea").classList.add("hidden");
+  const original=q.o.map((text,i)=>({text,correct:i===q.a})); shuffle(original);
+  const box=document.getElementById("options"); box.innerHTML="";
+  original.forEach((op,i)=>{let b=document.createElement("button");b.className="option";b.dataset.correct=op.correct?"1":"0";b.textContent=String.fromCharCode(65+i)+". "+op.text;b.onclick=()=>answer(b,op.correct,q,op.text);box.appendChild(b)});
+  document.getElementById("progressBar").style.width=((idx)/test.length*100)+"%";
+  document.getElementById("sceneTag").textContent=q.type==="rule" ? q.state.toUpperCase()+" ROAD KNOWLEDGE" : q.state.toUpperCase()+" · AV CONTEXT";
+  document.getElementById("sceneOverlay").innerHTML=q.type==="rule" ? "STATE CONTEXT LAYER<br>Traffic control: active<br>Rule interpretation: required" : "PERCEPTION OVERLAY<br>Trajectory confidence: "+(0.62+Math.random()*.26).toFixed(2)+"<br>Occlusion region: detected";
+  let sec=0; document.getElementById("timer").textContent="Decision time 0s";
+  timerInt=setInterval(()=>{sec++;document.getElementById("timer").textContent="Decision time "+sec+"s"},1000);
+}
+function answer(btn,isCorrect,q,text){
+  clearInterval(timerInt); const rt=(Date.now()-startTime)/1000;
+  [...document.querySelectorAll(".option")].forEach(b=>{b.disabled=true;if(b.dataset.correct==="1") b.classList.add("correct")});
+  if(!isCorrect) btn.classList.add("wrong");
+  if(!isCorrect){
+    document.getElementById("scene").style.boxShadow="inset 0 0 0 3px #f04438";
+  } else document.getElementById("scene").style.boxShadow="inset 0 0 0 3px #12b76a";
+  const f=document.getElementById("feedback"); f.className="feedback "+(isCorrect?"good":"bad");
+  f.innerHTML="<strong>"+(isCorrect?"Correct — safe interpretation.":"Risk missed — review the cue.")+"</strong><br>"+q.e+(q.critical&&!isCorrect?"<br><strong>Critical safety error flagged.</strong>":"");
+  answers.push({state:q.state,comp:q.comp,correct:isCorrect,critical:q.critical&&!isCorrect,rt});
+  document.getElementById("nextArea").classList.remove("hidden");
+  const qc=document.getElementById("questionCar");
+  qc.classList.remove("correct-run","wrong-stop");
+  void qc.offsetWidth;
+  qc.classList.add(isCorrect?"correct-run":"wrong-stop");
+}
+function nextQuestion(){
+  idx++;
+  document.getElementById("scene").style.boxShadow="";
+  if(idx>=test.length) finish(); else renderQuestion();
+}
+function classify(score,crit){
+  if(score>=80 && crit===0) return "STRONG FIT";
+  if(score>=60 || (score>=80 && crit>0)) return "CONSIDER";
+  return "NOT RECOMMENDED";
+}
+function finish(){
+  document.getElementById("progressBar").style.width="100%";
+  const correct=answers.filter(a=>a.correct).length, score=Math.round(correct/answers.length*100), crit=answers.filter(a=>a.critical).length;
+  const cls=classify(score,crit);
+  document.getElementById("scoreBig").textContent=score+"%";document.getElementById("classification").textContent=cls;
+  document.getElementById("criticalText").textContent=crit+" critical safety error"+(crit===1?"":"s");
+  const comps=["Driving & State Knowledge","Intent Prediction","Spatial / Occlusion Reasoning","Risk Recognition","Complex Decision-Making"];
+  const weights={"Driving & State Knowledge":25,"Intent Prediction":20,"Spatial / Occlusion Reasoning":20,"Risk Recognition":20,"Complex Decision-Making":15};
+  const cg=document.getElementById("compgrid");cg.innerHTML="";
+  comps.forEach(c=>{
+    const a=answers.filter(x=>x.comp===c), v=a.length?Math.round(a.filter(x=>x.correct).length/a.length*100):0;
+    cg.innerHTML+=`<div class="comp"><div class="comphead"><span>${c}</span><span>${v}%</span></div><div class="bar"><div style="width:${v}%"></div></div><div class="note" style="margin-top:7px">Assessment weight: ${weights[c]}%</div></div>`;
+  });
+  const tb=document.getElementById("stateTable");tb.innerHTML="";
+  selectedStates.forEach(s=>{const a=answers.filter(x=>x.state===s), n=a.filter(x=>x.correct).length;tb.innerHTML+=`<tr><td>${s}</td><td>${n} / ${a.length}</td><td>${Math.round(n/a.length*100)}%</td></tr>`});
+  const avg=answers.reduce((z,x)=>z+x.rt,0)/answers.length;
+  const ranked=comps.map(c=>{const a=answers.filter(x=>x.comp===c);return {c,v:a.length?a.filter(x=>x.correct).length/a.length:0}}).sort((a,b)=>b.v-a.v);
+  document.getElementById("recruiterContent").innerHTML=`
+    <div class="scoreHero"><div><div class="note" style="color:#d0d5dd">HIRING RECOMMENDATION</div><div style="font-size:34px;font-weight:850;margin-top:4px">${cls}</div></div><div style="text-align:right"><strong>${score}%</strong><br><span class="note" style="color:#d0d5dd">${crit} critical errors</span></div></div>
+    <div class="grid2" style="margin-top:18px">
+      <div class="comp"><div class="note">Candidate</div><strong>${escapeHtml(document.getElementById("name").value)}</strong><div class="note">${escapeHtml(document.getElementById("email").value)}</div></div>
+      <div class="comp"><div class="note">Average decision time</div><strong>${avg.toFixed(1)} sec</strong><div class="note">Diagnostic only — not included in score</div></div>
+      <div class="comp"><div class="note">Strongest signal</div><strong>${ranked[0].c}</strong><div class="note">${Math.round(ranked[0].v*100)}%</div></div>
+      <div class="comp"><div class="note">Development area</div><strong>${ranked[ranked.length-1].c}</strong><div class="note">${Math.round(ranked[ranked.length-1].v*100)}%</div></div>
+    </div>
+    <h3 style="margin-top:24px">Attempt controls</h3><p class="note">Candidate retake is disabled. In a production implementation, only an authorized recruiter/admin reset should create a new randomized attempt.</p>`;
+  window.result={score,crit,cls,avg};
+  show("results");
+}
+function escapeHtml(str){return str.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function showRecruiter(){show("recruiter")}
+function showCertificate(){
+ const r=window.result; const nm=document.getElementById("name").value;
+ document.getElementById("certName").textContent=nm;document.getElementById("certScore").textContent=r.score+"%";document.getElementById("certClass").textContent=r.cls;
+ document.getElementById("certDate").textContent=new Date().toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"});
+ const raw=(nm+document.getElementById("email").value+Date.now()).split("").reduce((a,c)=>((a<<5)-a)+c.charCodeAt(0)|0,0);
+ document.getElementById("certId").textContent="Certificate ID: AMRA-"+Math.abs(raw).toString().slice(0,9).padStart(9,"0");
+ show("certificate");
+}
+</script>
+</body>
+</html>
