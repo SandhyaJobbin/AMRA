@@ -1,0 +1,353 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Autonomous Mobility Readiness Assessment</title>
+<style>
+:root {
+  --ink:#101828; --muted:#667085; --line:#d0d5dd; --panel:rgba(255,255,255,.92);
+  --good:#067647; --bad:#b42318; --warn:#b54708; --accent:#2563eb; --accent2:#7c3aed;
+  --road:#2b2f36; --sand:#eee8dc; --sky:#e8f4ff;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;color:var(--ink);background:
+radial-gradient(circle at 20% 0%,#fff 0,#f6f8fb 30%,#eef3f8 72%,#e7edf4 100%);min-height:100vh}
+button,input{font:inherit}
+.shell{min-height:100vh;display:flex;flex-direction:column}
+header{height:68px;display:flex;align-items:center;justify-content:space-between;padding:0 34px;background:rgba(255,255,255,.82);backdrop-filter:blur(14px);border-bottom:1px solid #e4e7ec;position:sticky;top:0;z-index:20}
+.brand{font-weight:800;letter-spacing:-.02em} .brand small{display:block;font-weight:600;color:var(--muted);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.progress{font-size:13px;color:var(--muted)}
+main{width:min(1180px,94vw);margin:28px auto 56px;flex:1}
+.card{background:var(--panel);border:1px solid rgba(208,213,221,.8);box-shadow:0 20px 55px rgba(16,24,40,.08);border-radius:24px;padding:30px}
+.hero{display:grid;grid-template-columns:1.15fr .85fr;gap:28px;align-items:center;min-height:600px}
+.kicker{display:inline-flex;padding:7px 11px;border-radius:999px;background:#eef4ff;color:#3538cd;font-weight:750;font-size:12px;letter-spacing:.05em;text-transform:uppercase}
+h1{font-size:clamp(38px,5vw,70px);line-height:.98;margin:18px 0 18px;letter-spacing:-.055em}
+h2{font-size:34px;letter-spacing:-.035em;margin:0 0 12px} h3{margin:0 0 8px}
+.lead{font-size:18px;line-height:1.6;color:#475467;max-width:720px}
+.btn{border:0;border-radius:14px;padding:13px 18px;font-weight:750;cursor:pointer;transition:.18s;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.btn:hover{transform:translateY(-1px)} .primary{background:#101828;color:white} .secondary{background:#f2f4f7;color:#344054} .ghost{background:white;border:1px solid var(--line)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+label{display:block;font-weight:700;font-size:13px;margin-bottom:7px}
+input{width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:12px;outline:none;background:white} input:focus{border-color:#84adff;box-shadow:0 0 0 4px #eef4ff}
+.hidden{display:none!important}
+.roadscene{height:430px;border-radius:26px;position:relative;overflow:hidden;background:linear-gradient(#cfe9ff 0 46%,#d7d1c2 46% 55%,var(--road) 55% 100%);box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.city{position:absolute;left:0;right:0;top:140px;height:102px;background:
+linear-gradient(90deg,#aeb8c4 0 9%,transparent 9% 12%,#bbc4cf 12% 24%,transparent 24% 28%,#9da9b6 28% 40%,transparent 40% 44%,#c4ccd4 44% 57%,transparent 57% 60%,#9aa7b5 60% 77%,transparent 77% 80%,#bac3cb 80% 100%);opacity:.85}
+.roadline{position:absolute;bottom:83px;left:2%;width:96%;height:8px;background:repeating-linear-gradient(90deg,#fff 0 52px,transparent 52px 92px);opacity:.86}
+.car{position:absolute;bottom:60px;left:8%;width:138px;height:54px;border-radius:30px 42px 17px 17px;background:linear-gradient(135deg,#e7eaef,#b7c0ca);box-shadow:0 12px 18px #0005;transition:left 1s cubic-bezier(.2,.8,.2,1),transform .35s}
+.car:before{content:"";position:absolute;left:34px;top:-27px;width:68px;height:35px;border-radius:35px 40px 4px 4px;background:linear-gradient(135deg,#d4dae1,#8fa0b2);border:5px solid #c9d0d8}
+.car:after{content:"";position:absolute;left:16px;right:12px;bottom:-11px;height:21px;background:radial-gradient(circle at 18% 50%,#111 0 9px,transparent 10px),radial-gradient(circle at 82% 50%,#111 0 9px,transparent 10px)}
+.sensor{position:absolute;width:17px;height:9px;border-radius:50%;background:#27364a;top:-34px;left:61px}
+.scan{position:absolute;bottom:55px;left:120px;width:180px;height:115px;border-radius:50%;border:1px solid #4f8cff88;transform:skewX(-22deg);animation:pulse 1.8s infinite}
+@keyframes pulse{0%,100%{opacity:.2;transform:scale(.92) skewX(-22deg)}50%{opacity:.75;transform:scale(1.05) skewX(-22deg)}}
+.car.success{left:68%;transform:rotate(-1deg)} .car.fail{animation:shake .45s 2}
+@keyframes shake{25%{transform:translateX(-12px)}75%{transform:translateX(12px)}}
+.heroStats{position:absolute;right:18px;top:18px;background:#101828e8;color:white;border-radius:16px;padding:12px 14px;font-size:12px;line-height:1.65}
+.steps{display:flex;gap:10px;flex-wrap:wrap;margin:22px 0} .pill{padding:8px 11px;border-radius:999px;background:#f2f4f7;color:#475467;font-size:12px;font-weight:700}
+/* State selection */
+.stategrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:22px}
+.state{border:1px solid var(--line);border-radius:18px;padding:18px;background:#fff;cursor:pointer;transition:.2s;min-height:135px}
+.state:hover{transform:translateY(-2px);box-shadow:0 10px 25px #10182812;border-color:#98a2b3}
+.state.selected{outline:3px solid #9dbbff;background:#f5f8ff}
+.state strong{display:block;font-size:18px;margin-bottom:8px}
+.state span{color:var(--muted);font-size:13px;line-height:1.5}
+
+/* Accurate USA map */
+.mapwrap{border-radius:20px;background:#eef4f7;padding:14px;margin-top:22px;overflow:hidden}
+.usa-map{position:relative;width:100%;background:#fff;border-radius:15px;overflow:hidden}
+.usa-map svg{display:block;width:100%;height:auto}
+.state-shape{fill:transparent;stroke:transparent;stroke-width:2.5;cursor:pointer;transition:fill .18s ease,stroke .18s ease,filter .18s ease}
+.state-shape:hover{fill:rgba(37,99,235,.14);stroke:rgba(37,99,235,.82);stroke-width:3}
+.state-shape.pick{fill:rgba(37,99,235,.52);stroke:#155eef;stroke-width:3.5;filter:drop-shadow(0 2px 4px rgba(37,99,235,.30))}
+.state-shape.pick:hover{fill:rgba(37,99,235,.62)}
+.selection-hint{display:block;margin-top:4px;color:var(--muted);font-size:11px}
+@media(max-width:820px){
+  .usa-map{border-radius:12px}
+  .mapwrap{padding:9px}
+}
+.qwrap{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}
+.qvideo{position:relative;width:100%;aspect-ratio:16/9;border-radius:22px;overflow:hidden;background:#0a0f1a}
+.qvideo video{width:100%;height:100%;object-fit:cover;display:block}
+.qvideo .placeholder{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#0a0f1a}
+.qvideo .placeholder .inner{background:#101828e8;border:1px solid #ffffff24;border-radius:15px;padding:20px 24px;color:#fff;text-align:center;max-width:320px}
+.qvideo .placeholder .label{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#65d1ff;margin-bottom:8px}
+.qvideo .placeholder .prompt{font-size:13px;line-height:1.5;color:#d0d5dd}
+.qvideo .placeholder .status{margin-top:10px;font-size:11px;color:#ffc65c;font-weight:700}
+.qvideo .tag{position:absolute;left:18px;top:18px;z-index:2;display:inline-block;background:#101828d9;padding:6px 9px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.05em;color:#fff}
+.qhead{display:flex;justify-content:space-between;gap:12px;align-items:start} .qnum{font-size:12px;font-weight:800;color:#475467;text-transform:uppercase;letter-spacing:.06em}
+.question{font-size:26px;line-height:1.25;letter-spacing:-.025em;margin:12px 0 20px}
+.options{display:grid;gap:10px} .option{text-align:left;width:100%;padding:14px 15px;border:1px solid var(--line);border-radius:13px;background:white;cursor:pointer;font-weight:650;line-height:1.35} .option:hover{border-color:#98a2b3;background:#f9fafb} .option.correct{border-color:#75e0a7;background:#ecfdf3} .option.wrong{border-color:#fda29b;background:#fef3f2}
+.feedback{margin-top:17px;border-radius:15px;padding:15px 16px;font-size:14px;line-height:1.5} .feedback.good{background:#ecfdf3;color:#05603a} .feedback.bad{background:#fef3f2;color:#912018}
+.bar{height:8px;border-radius:999px;background:#eaecf0;overflow:hidden;margin:10px 0 0} .bar > div{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0;transition:.4s}
+.scoreHero{display:flex;align-items:center;justify-content:space-between;gap:22px;padding:24px;border-radius:20px;background:#101828;color:white} .scoreBig{font-size:62px;font-weight:850;letter-spacing:-.06em}
+.badge{padding:8px 13px;border-radius:999px;font-size:12px;font-weight:850;letter-spacing:.06em;background:white;color:#101828}
+.compgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin:18px 0}
+.comp{border:1px solid var(--line);border-radius:15px;padding:15px;background:#fff} .comphead{display:flex;justify-content:space-between;font-weight:700;font-size:13px}
+.table{width:100%;border-collapse:collapse;font-size:13px} .table th,.table td{padding:11px;border-bottom:1px solid #eaecf0;text-align:left}
+.certificate{padding:48px;border:10px solid #eef2f6;outline:1px solid #cfd6df;border-radius:8px;text-align:center;background:#fff;position:relative;overflow:hidden}
+.certificate:before{content:"";position:absolute;width:320px;height:320px;border-radius:50%;border:1px solid #dbe4ec;right:-110px;top:-145px;box-shadow:0 0 0 35px #f5f7f9,0 0 0 36px #dbe4ec}
+.certTitle{font-size:36px;font-weight:850;letter-spacing:-.04em} .certName{font-size:30px;font-family:Georgia,serif;margin:24px 0 8px}
+.note{font-size:12px;color:var(--muted);line-height:1.5} .topline{display:flex;justify-content:space-between;gap:14px;align-items:center;margin-bottom:20px}
+
+
+/* In-question AV response animations */
+@keyframes avbrake{
+  0%,100%{transform:translateX(0)}
+  25%{transform:translateX(-12px) rotate(-2deg)}
+  50%{transform:translateX(4px)}
+  75%{transform:translateX(-7px) rotate(2deg)}
+}
+
+@media(max-width:820px){.hero,.qwrap,.grid2{grid-template-columns:1fr}.stategrid,.compgrid{grid-template-columns:1fr}header{padding:0 16px}.card{padding:20px}}
+@media print{header,.noprint{display:none!important}body{background:white}main{width:100%;margin:0}.card{box-shadow:none;border:0}}
+</style>
+</head>
+<body>
+<div class="shell">
+<header><div class="brand">Autonomous Mobility Readiness <small>Hiring Assessment</small></div><div class="progress" id="headProgress">Prototype • 3 States</div></header>
+<main>
+
+
+
+
+
+
+
+
+<section id="screen-question" class="card hidden">
+ <div class="qwrap">
+   <div class="qvideo" id="sceneVideo">
+     <video id="questionVideo" muted loop playsinline></video>
+     <div class="placeholder" id="videoPlaceholder">
+       <div class="inner">
+         <div class="label">Video Clip</div>
+         <div class="prompt" id="videoPromptText"></div>
+         <div class="status" id="videoStatus">Loading...</div>
+       </div>
+     </div>
+     <span class="tag" id="sceneTag">AV CONTEXT</span>
+   </div>
+   <div>
+     <div class="qhead"><div><div class="qnum" id="qnum"></div><div id="competency" class="pill" style="display:inline-flex;margin-top:6px"></div></div><div id="timer" class="pill"></div></div>
+     <div class="question" id="question"></div>
+     <div class="options" id="options"></div>
+     <div id="feedback" class="feedback hidden"></div>
+     <div id="nextArea" class="hidden" style="margin-top:18px"><button class="btn primary" onclick="nextQuestion()">Next →</button></div>
+   </div>
+ </div>
+ <div class="bar"><div id="progressBar"></div></div>
+</section>
+
+<section id="screen-results" class="card hidden">
+ <span class="kicker">Assessment Complete</span>
+ <div class="scoreHero" style="margin-top:14px"><div><div class="note" style="color:#d0d5dd">OVERALL SCORE</div><div class="scoreBig" id="scoreBig">0%</div></div><div style="text-align:right"><div class="badge" id="classification">—</div><div id="criticalText" style="font-size:12px;color:#d0d5dd;margin-top:10px"></div></div></div>
+ <h3 style="margin-top:26px">Competency snapshot</h3><div class="compgrid" id="compgrid"></div>
+ <h3>State performance</h3><table class="table"><thead><tr><th>State</th><th>Correct</th><th>Score</th></tr></thead><tbody id="stateTable"></tbody></table>
+ <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:22px"><button class="btn primary" onclick="showCertificate()">View certificate</button><button class="btn secondary" onclick="showRecruiter()">Recruiter view</button></div>
+ <p class="note" style="margin-top:16px">Response time is diagnostic only. Critical safety misses are shown separately.</p>
+</section>
+
+<section id="screen-recruiter" class="card hidden">
+ <div class="topline"><div><span class="kicker">Recruiter Analytics</span><h2 style="margin-top:12px">Hiring signal</h2></div><button class="btn ghost" onclick="show('results')">Back</button></div>
+ <div id="recruiterContent"></div>
+</section>
+
+<section id="screen-certificate" class="card hidden">
+ <div class="noprint" style="display:flex;justify-content:flex-end;gap:10px;margin-bottom:16px"><button class="btn ghost" onclick="show('results')">Back</button><button class="btn primary" onclick="window.print()">Print / Save PDF</button></div>
+ <div class="certificate">
+   <div class="kicker">Certificate of Assessment Completion</div>
+   <div class="certTitle" style="margin-top:18px">Autonomous Mobility Readiness Assessment</div>
+   <div class="note" style="margin-top:14px">This certifies that</div>
+   <div class="certName" id="certName">Candidate Name</div>
+   <div class="note">completed an autonomous-vehicle hiring assessment covering U.S. driving context, intent prediction, spatial reasoning, risk recognition and complex decision-making.</div>
+   <div style="margin:28px auto;width:min(620px,100%);display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+     <div><div class="note">SCORE</div><strong id="certScore" style="font-size:24px"></strong></div>
+     <div><div class="note">CLASSIFICATION</div><strong id="certClass" style="font-size:18px"></strong></div>
+     <div><div class="note">DATE</div><strong id="certDate"></strong></div>
+   </div>
+   <div class="note">States assessed</div><strong>Arizona · California · New York</strong>
+   <div class="note" id="certId" style="margin-top:24px"></div>
+ </div>
+</section>
+</main>
+</div>
+<script>
+const selectableStates = ["Arizona","California","New York"];
+
+const BANKS = {
+  "Arizona": [
+     {"type":"rule","comp":"Driving & State Knowledge","critical":true,"q":"A school bus ahead has stopped with red lights flashing and its stop arm extended. What should the driver do?","o":["Pass slowly","Stop as required and wait until it is safe and lawful to proceed","Honk and pass on the left","Continue if no child is visible"],"a":1,"e":"A stopped school bus with active red warning signals is a safety-critical condition. Do not pass when a stop is required.","videoFile":"assets/Q1.mp4","videoPrompt":"School bus, red lights, stop arm out"},
+     {"type":"behavior","comp":"Intent Prediction","critical":false,"q":"A car approaches an intersection quickly, then brakes late with its front wheels angled left. What is the strongest intent clue?","o":["Vehicle color","Wheel angle combined with deceleration","Time of day","Number plate position"],"a":1,"e":"Wheel orientation plus deceleration provides a direct cue about a likely turn.","videoFile":"assets/Q2.mp4","videoPrompt":"Late braking with front wheels angled left"},
+     {"type":"behavior","comp":"Spatial / Occlusion Reasoning","critical":true,"q":"A large pickup blocks your view of the sidewalk near a crosswalk. What is the most important hidden-risk assumption?","o":["The sidewalk is empty","A pedestrian or cyclist may emerge from the occluded area","Only vehicles matter","The pickup will reverse"],"a":1,"e":"Occlusion should increase caution because vulnerable road users can emerge with little warning.","videoFile":"assets/Q3.mp4","videoPrompt":"Pickup blocking sidewalk view at crosswalk"},
+     {"type":"behavior","comp":"Risk Recognition","critical":false,"q":"A vehicle ahead repeatedly varies speed and touches the lane markings. What is the best interpretation?","o":["Assume perfect lane keeping","Treat the behavior as unpredictable and increase safety margin","Immediately overtake on either side","Ignore it until a signal appears"],"a":1,"e":"Inconsistent speed and lateral control are uncertainty cues; increase space and reduce reliance on predictable behavior.","videoFile":"assets/Q4.mp4","videoPrompt":"Vehicle varying speed, drifting onto lane markings"},
+    {"type":"behavior","comp":"Complex Decision-Making","critical":true,"q":"An AV has a green signal, but a pedestrian is still crossing in front of it. What is the correct safety interpretation?","o":["Green means proceed immediately","The pedestrian remains the controlling hazard; do not enter their path","Sound the horn and continue","Drive around the pedestrian"],"a":1,"e":"A green signal does not override an occupied conflict area. Avoid entering the pedestrian's path.","videoFile":"assets/Q5.mp4","videoPrompt":"Green signal, pedestrian still in crosswalk"}
+  ],
+  "California": [
+    {"type":"rule","comp":"Driving & State Knowledge","critical":false,"q":"When entering a roundabout in California, a driver should:","o":["Enter before circulating traffic","Yield to traffic already in the roundabout","Stop inside the roundabout","Drive clockwise"],"a":1,"e":"Slow, yield to circulating traffic, then enter when a safe gap is available.","videoFile":"assets/Q6.mp4","videoPrompt":"Roundabout entry"},
+    {"type":"behavior","comp":"Intent Prediction","critical":false,"q":"A pedestrian at a San Francisco corner looks toward traffic, shifts weight forward, and steps close to the curb. What is the best prediction?","o":["Crossing intent may be developing","They will definitely turn around","They are waiting for a bus","No intent can be inferred"],"a":0,"e":"Body orientation, gaze, and weight shift are useful pre-crossing intent cues.","videoFile":"assets/Q7.mp4","videoPrompt":"Pedestrian weight-shift at curb, SF corner"},
+    {"type":"behavior","comp":"Spatial / Occlusion Reasoning","critical":true,"q":"San Francisco: a delivery van is double-parked just before a crosswalk, blocking the curb view. What should be treated as the highest hidden risk?","o":["Only the van door","A pedestrian or cyclist emerging from the occluded curb area","The building entrance","The traffic light changing"],"a":1,"e":"A large stopped vehicle before a crossing creates a high-value occlusion zone for vulnerable road users.","videoFile":"assets/Q8.mp4","videoPrompt":"Double-parked delivery van before crosswalk"},
+    {"type":"behavior","comp":"Risk Recognition","critical":false,"q":"A passenger begins opening a door from a parked car next to a bike lane. Which risk is most immediate?","o":["The car will reverse","A cyclist may swerve into the travel lane to avoid the door","The signal will change","The pedestrian light will activate"],"a":1,"e":"Dooring risk can force cyclists abruptly into adjacent vehicle space.","videoFile":"assets/Q9.mp4","videoPrompt":"Door opening beside a bike lane"},
+    {"type":"behavior","comp":"Complex Decision-Making","critical":true,"q":"The AV has a green light. A cyclist has entered the intersection against the signal. What should the analyst prioritize?","o":["Legal right-of-way only","Actual collision risk and the cyclist's trajectory","The green light means no response is needed","Accelerating before cross traffic starts"],"a":1,"e":"Safety reasoning must account for actual actor behavior, even when another road user is violating a rule.","videoFile":"assets/Q10.mp4","videoPrompt":"Cyclist enters against signal while AV has green"}
+  ],
+  "New York": [
+    {"type":"rule","comp":"Driving & State Knowledge","critical":false,"q":"A driver approaching a pedestrian using a white cane should:","o":["Assume the person can see the vehicle","Exercise heightened caution and yield as required","Honk continuously","Pass quickly before they step out"],"a":1,"e":"A white cane can indicate visual impairment; heightened caution and yielding are essential.","videoFile":"assets/Q11.mp4","videoPrompt":"Pedestrian using a white cane"},
+    {"type":"behavior","comp":"Intent Prediction","critical":false,"q":"Manhattan-style traffic: a taxi slows abruptly beside the curb with no hazard lights. What should be anticipated?","o":["Possible passenger pickup/drop-off or curb maneuver","Guaranteed U-turn","The taxi has broken down","No behavior change"],"a":0,"e":"Curbside slowing can indicate a pickup/drop-off or sudden stopping maneuver; context matters even without signals.","videoFile":"assets/Q12.mp4","videoPrompt":"Taxi slowing abruptly at the curb"},
+    {"type":"behavior","comp":"Spatial / Occlusion Reasoning","critical":false,"q":"A pedestrian is visible only from the knees down between parked vehicles. What should the analyst do?","o":["Ignore until the full body is visible","Treat the partial detection as a meaningful occlusion cue and anticipate emergence","Assume the person is stationary","Assume it is a road sign"],"a":1,"e":"Partial visibility can be enough to infer a hidden actor and should raise attention to the occluded space.","videoFile":"assets/Q13.mp4","videoPrompt":"Pedestrian visible only knees-down between parked cars"},
+    {"type":"behavior","comp":"Risk Recognition","critical":false,"q":"A cyclist is traveling to the right of a bus that is preparing to pull toward the curb. What is the key risk?","o":["Path compression between bus and curb","The cyclist will always stop","The bus cannot move laterally","Only rear-end collision matters"],"a":0,"e":"The available lateral corridor can shrink quickly when a large vehicle moves toward the curb.","videoFile":"assets/Q14.mp4","videoPrompt":"Cyclist to the right of a bus pulling to the curb"},
+    {"type":"behavior","comp":"Complex Decision-Making","critical":true,"q":"The AV has right-of-way, but an aggressive driver begins forcing into the lane with very small clearance. What should govern the safety judgment?","o":["Right-of-way means maintain course regardless","Actual collision risk and safe space, not entitlement","Accelerate to block the merge","Ignore the vehicle until fully in lane"],"a":1,"e":"Operational safety depends on real behavior and available space, not simply legal right-of-way.","videoFile":"assets/Q15.mp4","videoPrompt":"Aggressive driver forcing into the lane"}
+  ]
+};
+const screens = ["home","register","instructions","states","question","results","recruiter","certificate"];
+let selectedStates = ["Arizona","California","New York"];
+let test = [], idx = 0, answers = [], startTime = 0, timerInt = null;
+
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+
+
+
+function show(id) {
+  screens.forEach(s => { const el = document.getElementById("screen-"+s); if (el) el.classList.toggle("hidden", s!==id); });
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function goInstructions(){
+  const name=document.getElementById("name").value.trim(), email=document.getElementById("email").value.trim();
+  if(!name || !/^\S+@\S+\.\S+$/.test(email)){alert("Please enter your full name and a valid email ID.");return;}
+  show("instructions");
+}
+function toggleState(s){
+  // Fixed demo: all 3 states always selected, no toggling
+  return;
+}
+function updateStateSelection(){
+  // Fixed demo: all 3 states always selected
+  selectableStates.forEach(x=>{
+    const card=document.getElementById("card-"+x);
+    const shape=document.getElementById("shape-"+x);
+    if(card) card.classList.add("selected");
+    if(shape) shape.classList.add("pick");
+  });
+
+  const countEl=document.getElementById("selectionCount");
+  if(countEl) countEl.textContent="3 of 3 selected";
+
+  const hint=document.getElementById("selectionHint");
+  if(hint) hint.textContent="All three states selected";
+
+  const startButton=document.getElementById("startAssessmentButton");
+  if(startButton) startButton.disabled=false;
+}
+
+// Fixed demo order: AZ → CA → NY, 5 questions each (no randomization)
+const DEMO_STATES = ["Arizona", "California", "New York"];
+function startAssessment(){
+  test=[];
+  DEMO_STATES.forEach(s=> BANKS[s].forEach(q=>test.push({...q,state:s})));
+  idx=0; answers=[]; show("question"); renderQuestion();
+}
+
+function renderQuestion(){
+  clearInterval(timerInt);
+  const q=test[idx]; startTime=Date.now();
+  document.getElementById("qnum").textContent=`Question ${idx+1} of ${test.length} · ${q.state}`;
+  document.getElementById("competency").textContent=q.comp;
+  document.getElementById("question").textContent=q.q;
+  document.getElementById("feedback").className="feedback hidden"; document.getElementById("feedback").innerHTML="";
+  document.getElementById("nextArea").classList.add("hidden");
+  const original=q.o.map((text,i)=>({text,correct:i===q.a})); shuffle(original);
+  const box=document.getElementById("options"); box.innerHTML="";
+  original.forEach((op,i)=>{let b=document.createElement("button");b.className="option";b.dataset.correct=op.correct?"1":"0";b.textContent=String.fromCharCode(65+i)+". "+op.text;b.onclick=()=>answer(b,op.correct,q,op.text);box.appendChild(b)});
+  document.getElementById("progressBar").style.width=((idx)/test.length*100)+"%";
+  document.getElementById("sceneTag").textContent=q.type==="rule" ? q.state.toUpperCase()+" ROAD KNOWLEDGE" : q.state.toUpperCase()+" · AV CONTEXT";
+  // Video
+  const vid=document.getElementById("questionVideo");
+  const ph=document.getElementById("videoPlaceholder");
+  const vs=document.getElementById("videoStatus");
+  if(q.videoFile){
+    vid.src=q.videoFile;
+    vid.style.display="block";
+    ph.style.display="none";
+    vid.load();
+    vid.play().catch(()=>{});
+  } else {
+    vid.style.display="none";
+    ph.style.display="block";
+    if(vs) vs.textContent="No video available";
+  }
+  let sec=0; document.getElementById("timer").textContent="Decision time 0s";
+  timerInt=setInterval(()=>{sec++;document.getElementById("timer").textContent="Decision time "+sec+"s"},1000);
+}
+function answer(btn,isCorrect,q,text){
+  clearInterval(timerInt); const rt=(Date.now()-startTime)/1000;
+  [...document.querySelectorAll(".option")].forEach(b=>{b.disabled=true;if(b.dataset.correct==="1") b.classList.add("correct")});
+  if(!isCorrect) btn.classList.add("wrong");
+  const f=document.getElementById("feedback"); f.className="feedback "+(isCorrect?"good":"bad");
+  f.innerHTML="<strong>"+(isCorrect?"Correct — safe interpretation.":"Risk missed — review the cue.")+"</strong><br>"+q.e+(q.critical&&!isCorrect?"<br><strong>Critical safety error flagged.</strong>":"");
+  answers.push({state:q.state,comp:q.comp,correct:isCorrect,critical:q.critical&&!isCorrect,rt});
+  document.getElementById("nextArea").classList.remove("hidden");
+}
+function nextQuestion(){
+  idx++;
+  if(idx>=test.length) finish(); else renderQuestion();
+}
+function classify(score,crit){
+  if(score>=80 && crit===0) return "STRONG FIT";
+  if(score>=60 || (score>=80 && crit>0)) return "CONSIDER";
+  return "NOT RECOMMENDED";
+}
+function finish(){
+  document.getElementById("progressBar").style.width="100%";
+  const correct=answers.filter(a=>a.correct).length, score=Math.round(correct/answers.length*100), crit=answers.filter(a=>a.critical).length;
+  const cls=classify(score,crit);
+  document.getElementById("scoreBig").textContent=score+"%";document.getElementById("classification").textContent=cls;
+  document.getElementById("criticalText").textContent=crit+" critical safety error"+(crit===1?"":"s");
+  const comps=["Driving & State Knowledge","Intent Prediction","Spatial / Occlusion Reasoning","Risk Recognition","Complex Decision-Making"];
+  const weights={"Driving & State Knowledge":25,"Intent Prediction":20,"Spatial / Occlusion Reasoning":20,"Risk Recognition":20,"Complex Decision-Making":15};
+  const cg=document.getElementById("compgrid");cg.innerHTML="";
+  comps.forEach(c=>{
+    const a=answers.filter(x=>x.comp===c), v=a.length?Math.round(a.filter(x=>x.correct).length/a.length*100):0;
+    cg.innerHTML+=`<div class="comp"><div class="comphead"><span>${c}</span><span>${v}%</span></div><div class="bar"><div style="width:${v}%"></div></div><div class="note" style="margin-top:7px">Assessment weight: ${weights[c]}%</div></div>`;
+  });
+  const tb=document.getElementById("stateTable");tb.innerHTML="";
+  selectedStates.forEach(s=>{const a=answers.filter(x=>x.state===s), n=a.filter(x=>x.correct).length;tb.innerHTML+=`<tr><td>${s}</td><td>${n} / ${a.length}</td><td>${Math.round(n/a.length*100)}%</td></tr>`});
+  const avg=answers.reduce((z,x)=>z+x.rt,0)/answers.length;
+  const ranked=comps.map(c=>{const a=answers.filter(x=>x.comp===c);return {c,v:a.length?a.filter(x=>x.correct).length/a.length:0}}).sort((a,b)=>b.v-a.v);
+  document.getElementById("recruiterContent").innerHTML=`
+    <div class="scoreHero"><div><div class="note" style="color:#d0d5dd">HIRING RECOMMENDATION</div><div style="font-size:34px;font-weight:850;margin-top:4px">${cls}</div></div><div style="text-align:right"><strong>${score}%</strong><br><span class="note" style="color:#d0d5dd">${crit} critical errors</span></div></div>
+    <div class="grid2" style="margin-top:18px">
+      <div class="comp"><div class="note">Candidate</div><strong>${escapeHtml(document.getElementById("name").value)}</strong><div class="note">${escapeHtml(document.getElementById("email").value)}</div></div>
+      <div class="comp"><div class="note">Average decision time</div><strong>${avg.toFixed(1)} sec</strong><div class="note">Diagnostic only — not included in score</div></div>
+      <div class="comp"><div class="note">Strongest signal</div><strong>${ranked[0].c}</strong><div class="note">${Math.round(ranked[0].v*100)}%</div></div>
+      <div class="comp"><div class="note">Development area</div><strong>${ranked[ranked.length-1].c}</strong><div class="note">${Math.round(ranked[ranked.length-1].v*100)}%</div></div>
+    </div>
+    <h3 style="margin-top:24px">Attempt controls</h3><p class="note">Candidate retake is disabled. In a production implementation, only an authorized recruiter/admin reset should create a new randomized attempt.</p>`;
+  window.result={score,crit,cls,avg};
+  show("results");
+}
+function escapeHtml(str){return str.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+function showRecruiter(){show("recruiter")}
+function showCertificate(){
+ const r=window.result; const nm=document.getElementById("name").value;
+ document.getElementById("certName").textContent=nm;document.getElementById("certScore").textContent=r.score+"%";document.getElementById("certClass").textContent=r.cls;
+ document.getElementById("certDate").textContent=new Date().toLocaleDateString("en-US",{year:"numeric",month:"long",day:"numeric"});
+ const raw=(nm+document.getElementById("email").value+Date.now()).split("").reduce((a,c)=>((a<<5)-a)+c.charCodeAt(0)|0,0);
+ document.getElementById("certId").textContent="Certificate ID: AMRA-"+Math.abs(raw).toString().slice(0,9).padStart(9,"0");
+ show("certificate");
+}
+
+
+const urlParams = new URLSearchParams(window.location.search);
+const candidateName = urlParams.get('name') || "Candidate Name";
+const candidateEmail = urlParams.get('email') || "";
+
+// We need to inject these so the rest of the code works
+document.body.insertAdjacentHTML('beforeend', '<input type="hidden" id="name" value="'+escapeHtml(decodeURIComponent(candidateName))+'"><input type="hidden" id="email" value="'+escapeHtml(decodeURIComponent(candidateEmail))+'">');
+
+// Start assessment immediately
+startAssessment();
+
+</script>
+</body>
+</html>
