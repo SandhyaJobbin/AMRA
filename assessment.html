@@ -218,16 +218,24 @@ function goInstructions(){
   show("instructions");
 }
 function toggleState(s){
-  // Fixed demo: all 3 states always selected, no toggling
-  return;
+  if(selectedStates.includes(s)){
+    selectedStates=selectedStates.filter(x=>x!==s);
+  }else{
+    selectedStates.push(s);
+  }
+  updateStateSelection();
 }
 function updateStateSelection(){
-  // Fixed demo: all 3 states always selected
   selectableStates.forEach(x=>{
     const card=document.getElementById("card-"+x);
     const shape=document.getElementById("shape-"+x);
-    if(card) card.classList.add("selected");
-    if(shape) shape.classList.add("pick");
+    if(selectedStates.includes(x)){
+      if(card) card.classList.add("selected");
+      if(shape) shape.classList.add("pick");
+    }else{
+      if(card) card.classList.remove("selected");
+      if(shape) shape.classList.remove("pick");
+    }
   });
 
   const countEl=document.getElementById("selectionCount");
